@@ -32,20 +32,6 @@ You can play Sudoku, enter your own numbers, solve the puzzle in real-time with 
 
 ---
 
-## How to Run
-
-1. Install Python and Pygame if you haven't already:
-    ```sh
-    pip install pygame
-    ```
-2. Download or clone this repository.
-3. Run the main file:
-    ```sh
-    python main.py
-    ```
-
----
-
 ## Customization
 
 - You can change the initial puzzle by editing the `grid` variable in `main.py`.
