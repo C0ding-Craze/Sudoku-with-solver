@@ -47,4 +47,4 @@ You can play Sudoku, enter your own numbers, solve the puzzle in real-time with 
 
 ## License
 
-This project is for educational and personal use.
+This project is for educational and personal use only.
