@@ -16,9 +16,9 @@ pygame.display.set_caption("Sudoku ")
 
 font = pygame.font.SysFont(None, 80)
 message_font = pygame.font.SysFont(None, 250)
-instr_font = pygame.font.SysFont("Impact", 70)
+instr_font = pygame.font.SysFont("Impact", 50)
 
-grid = [
+original_grid = [
     [3, 0, 6, 5, 0, 8, 4, 0, 0],
     [5, 2, 0, 0, 0, 0, 0, 0, 0],
     [0, 8, 7, 0, 0, 0, 0, 3, 1],
@@ -30,13 +30,15 @@ grid = [
     [0, 0, 5, 2, 0, 6, 3, 0, 0]
 ]
 
+# Working grid that gets modified during play/solving
+grid = [row[:] for row in original_grid]
+
 selected_cell = None  # (row, col) or None
 game_won = False
 
 instruction_start_time = time.time()
 
 def draw_board():
-
     screen.fill((245, 245, 220))
     # Draw cell borders
     for row in range(cell_number):
@@ -53,15 +55,20 @@ def draw_board():
             pygame.draw.line(screen, (0, 0, 0), (0, i * cell_size), (screen_width, i * cell_size), 6)
 
     # Draw screen border
-    pygame.draw.rect(screen,(144, 162, 80), (0, 0, screen_width, screen_height), 8)
+    pygame.draw.rect(screen, (144, 162, 80), (0, 0, screen_width, screen_height), 8)
     draw_numbers()
 
 def draw_numbers():
     for row in range(cell_number):
         for col in range(cell_number):
-            number = grid[row][col] 
+            number = grid[row][col]
             if number != 0:
-                text = font.render(str(number), True, (100, 0, 0))
+                # Draw original numbers in dark red, user entries in blue
+                if original_grid[row][col] != 0:
+                    color = (100, 0, 0) 
+                else:
+                    color = (0, 80, 180) 
+                text = font.render(str(number), True, color)
                 text_rect = text.get_rect(center=(col * cell_size + cell_size // 2, row * cell_size + cell_size // 2))
                 screen.blit(text, text_rect)
 
@@ -70,22 +77,44 @@ def handle_mouse_click(pos):
     row = pos[1] // cell_size
     col = pos[0] // cell_size
     selected_cell = (row, col)
-    
+
 def draw_selected_cell(cell=None):
-    # Draws a rectangle around the selected cell or a given cell (for solver)
     if cell is None:
         cell = selected_cell
-    if cell:
+    if cell is not None:
         row, col = cell
         rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
-        pygame.draw.rect(screen, (0, 117, 255), rect, 5)  
+        pygame.draw.rect(screen, (0, 117, 255), rect, 5)
 
 def handle_key_press(event):
-    global selected_cell  
+    global selected_cell
 
-    if selected_cell and event.unicode in "123456789":
-        row, col = selected_cell
-        grid[row][col] = int(event.unicode)        
+    if not selected_cell:
+        return
+
+    row, col = selected_cell
+
+    if original_grid[row][col] == 0:
+        # Fill numbers 1-9
+        if hasattr(event, 'unicode') and event.unicode and event.unicode in "123456789":
+            grid[row][col] = int(event.unicode)
+            return
+
+        # Clear cell with backspace/delete
+        if event.key in (pygame.K_BACKSPACE, pygame.K_DELETE):
+            grid[row][col] = 0
+            return
+
+    # Navigate with arrow keys
+    if event.key == pygame.K_LEFT:
+        col = max(0, col - 1)
+    elif event.key == pygame.K_RIGHT:
+        col = min(cell_number - 1, col + 1)
+    elif event.key == pygame.K_UP:
+        row = max(0, row - 1)
+    elif event.key == pygame.K_DOWN:
+        row = min(cell_number - 1, row + 1)
+    selected_cell = (row, col)
 
 def check_win():
     # Check rows
@@ -109,7 +138,7 @@ def check_win():
     return True
 
 def show_win():
-    message = message_font.render("You Won!", True, (139,69,19))
+    message = message_font.render("You Won!", True, (139, 69, 19))
     message_rect = message.get_rect(center=(screen_width // 2, screen_height // 2))
     screen.blit(message, message_rect)
 
@@ -140,6 +169,14 @@ def is_valid(num, pos):
     return True
 
 def solver(realtime=True):
+    for row in range(9):
+        for col in range(9):
+            if original_grid[row][col] == 0:
+                grid[row][col] = 0
+
+    _solve(realtime)
+
+def _solve(realtime=True):
     empty = find_empty()
     if not empty:
         return True
@@ -152,49 +189,38 @@ def solver(realtime=True):
                 draw_board()
                 draw_selected_cell((row, col))
                 pygame.display.update()
-                # --- Handle events here ---
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         pygame.quit()
                         sys.exit()
-                pygame.time.delay(50) # Add delay to visualize solving
+                pygame.time.delay(50)
 
-            if solver(realtime):
+            if _solve(realtime):
                 return True
+
             grid[row][col] = 0
             if realtime:
                 draw_board()
                 draw_selected_cell((row, col))
                 pygame.display.update()
-                # --- Handle events here ---
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         pygame.quit()
                         sys.exit()
-                pygame.time.delay(50) # Add delay to visualize backtracking
+                pygame.time.delay(50)
     return False
 
 def reset_game():
-    global grid, selected_cell
-    grid = [
-        [3, 0, 6, 5, 0, 8, 4, 0, 0],
-        [5, 2, 0, 0, 0, 0, 0, 0, 0],
-        [0, 8, 7, 0, 0, 0, 0, 3, 1],
-        [0, 0, 3, 0, 1, 0, 0, 8, 0],
-        [9, 0, 0, 8, 6, 3, 0, 0, 5],
-        [0, 5, 0, 0, 9, 0, 6, 0, 0],
-        [1, 3, 0, 0, 0, 0, 2, 5, 0],
-        [0, 0, 0, 0, 0, 0, 0, 7, 4],
-        [0, 0, 5, 2, 0, 6, 3, 0, 0]
-    ]
+    global grid, selected_cell, game_won
+    grid = [row[:] for row in original_grid]
     selected_cell = None
-     
+    game_won = False
 
 def show_instructions():
     screen.fill((245, 245, 220))
     instr_text = instr_font.render("Press R to reset, Enter to solve", True, (44, 62, 80))
     instr_rect = instr_text.get_rect(center=(screen_width // 2, screen_height // 2))
-    screen.blit(instr_text,instr_rect)
+    screen.blit(instr_text, instr_rect)
 
 while True:
     for event in pygame.event.get():
@@ -202,7 +228,7 @@ while True:
             pygame.quit()
             sys.exit()
 
-        if not game_won:  # Only allow interaction if game not won
+        if not game_won:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 handle_mouse_click(pygame.mouse.get_pos())
 
@@ -212,7 +238,7 @@ while True:
                 if event.key == pygame.K_r:
                     reset_game()
 
-                if event.key == pygame.K_RETURN and not game_won:  # Use Enter key to solve
+                if event.key == pygame.K_RETURN and not game_won:
                     solver(realtime=True)
                     game_won = True
 
@@ -221,9 +247,9 @@ while True:
     if check_win():
         game_won = True
         show_win()
-        
+
     if time.time() - instruction_start_time < 2:
         show_instructions()
 
     clock.tick(60)
-    pygame.display.update()
+    pygame.display.update() 
