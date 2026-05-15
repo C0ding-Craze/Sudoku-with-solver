@@ -28,7 +28,7 @@ You can play Sudoku, enter your own numbers, solve the puzzle in real-time with 
 ## Requirements
 
 - Python 3.x
-- [Pygame](https://www.pygame.org/)
+- [Pygame](https://www.pygame.org/) or [Pygame-ce](https://pypi.org/project/pygame-ce/)
 
 ---
 
