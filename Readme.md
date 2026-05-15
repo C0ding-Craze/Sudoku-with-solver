@@ -21,6 +21,7 @@ You can play Sudoku, enter your own numbers, solve the puzzle in real-time with 
 - **Type 1–9** to fill the selected cell.
 - **Press `Enter`** to auto-solve the puzzle visually.
 - **Press `R`** to reset the puzzle.
+- **Press `Delete` or `Backspace` to delete an entry.
 - **Close** the window to exit.
 
 ---
@@ -28,7 +29,7 @@ You can play Sudoku, enter your own numbers, solve the puzzle in real-time with 
 ## Requirements
 
 - Python 3.x
-- [Pygame](https://www.pygame.org/) or [Pygame-ce](https://pypi.org/project/pygame-ce/)
+- [Pygame](https://pypi.org/project/pygame/) or [Pygame-ce](https://pypi.org/project/pygame-ce/)
 
 ---
 
